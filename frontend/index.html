@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Stock Price Predictor - Indian Market Analysis</title>
+    <meta name="description" content="AI-powered stock analysis and price prediction for NSE & BSE listed companies">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/static/css/style.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <path d="M4 28L16 4L28 28" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round" />
+                        <defs>
+                            <linearGradient id="gradient" x1="4" y1="16" x2="28" y2="16">
+                                <stop offset="0%" stop-color="#6366f1" />
+                                <stop offset="100%" stop-color="#06b6d4" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <h1>AI Stock Predictor</h1>
+                </div>
+                <div class="theme-toggle" id="themeToggle">
+                    <svg class="sun-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path
+                            d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" />
+                    </svg>
+                    <svg class="moon-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Market Overview -->
+            <section class="market-overview" id="marketOverview">
+                <div class="indices-grid">
+                    <div class="index-card" id="niftyCard">
+                        <div class="index-label">NIFTY 50</div>
+                        <div class="index-value">--</div>
+                        <div class="index-change">--</div>
+                    </div>
+                    <div class="index-card" id="sensexCard">
+                        <div class="index-label">SENSEX</div>
+                        <div class="index-value">--</div>
+                        <div class="index-change">--</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Important Notice Banner -->
+            <section class="notice-banner">
+                <div class="notice-content">
+                    <div class="notice-icon">ℹ️</div>
+                    <div class="notice-text">
+                        <h3>📅 Best Time to Use This App</h3>
+                        <p><strong>For Live Data:</strong> Monday - Friday, 9:15 AM - 3:30 PM IST (Market Hours)</p>
+                        <p><strong>Why?</strong> This app uses <code>yfinance</code> (free API) which works best during
+                            market hours. On weekends and after hours, Yahoo Finance may rate-limit requests or return
+                            stale data.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+        </section>
+
+        <!-- Search Section -->
+        <section class="search-section">
+            <div class="search-container">
+                <div class="search-header">
+                    <h2>Search Stocks</h2>
+                    <p class="search-hint">💡 <strong>Tip:</strong> For best results, use during market hours
+                        (Mon-Fri 9:15 AM - 3:30 PM IST).</p>
+                </div>
+                <div class="search-box">
+                    <svg class="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="search-results" id="searchResults"></div>
+            </div>
+        </section>
+
+        <!-- Stock Analysis Section (Hidden by default) -->
+        <section class="stock-analysis" id="stockAnalysis" style="display: none;">
+            <!-- Loading State -->
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="loader"></div>
+                <p>Analyzing stock data...</p>
+            </div>
+
+            <!-- Stock Header -->
+            <div class="stock-header" id="stockHeader"></div>
+
+            <!-- Analysis Grid -->
+            <div class="analysis-grid">
+                <!-- Fundamentals Card -->
+                <div class="card fundamentals-card">
+                    <h2 class="card-title">Fundamentals</h2>
+                    <div class="fundamentals-grid" id="fundamentalsGrid"></div>
+                </div>
+
+                <!-- AI Verdict Card -->
+                <div class="card verdict-card">
+                    <h2 class="card-title">AI Verdict</h2>
+                    <div class="verdict-content" id="verdictContent"></div>
+                </div>
+
+                <!-- Price Chart Card -->
+                <div class="card chart-card">
+                    <h2 class="card-title">Price Analysis & Prediction</h2>
+                    <canvas id="priceChart"></canvas>
+                    <div class="chart-legend" id="chartLegend"></div>
+                </div>
+
+                <!-- Technical Indicators Card -->
+                <div class="card technical-card">
+                    <h2 class="card-title">Technical Indicators</h2>
+                    <div class="technical-grid" id="technicalGrid"></div>
+                </div>
+
+                <!-- News & Sentiment Card -->
+                <div class="card news-card">
+                    <h2 class="card-title">News & Sentiment</h2>
+                    <div class="sentiment-summary" id="sentimentSummary"></div>
+                    <div class="news-list" id="newsList"></div>
+                </div>
+
+                <!-- AI Summary Card -->
+                <div class="card summary-card">
+                    <h2 class="card-title">AI Analysis Summary</h2>
+                    <div class="summary-content" id="summaryContent"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Market News Section -->
+        <section class="market-news-section">
+            <h2 class="section-title">Market News</h2>
+            <div class="market-news-grid" id="marketNews"></div>
+        </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="disclaimer">
+                <strong>⚠️ Disclaimer:</strong> This AI-powered analysis is for informational purposes only and should
+                not be considered as financial advice.
+                Stock market investments are subject to market risks. Past performance is not indicative of future
+                results.
+                Please conduct your own research and consult with a qualified financial advisor before making any
+                investment decisions.
+            </div>
+            <div class="footer-info">
+                <p>Built with ❤️ using FastAPI, yfinance, NewsAPI, and Machine Learning</p>
+                <p>Data sources: NSE, BSE via yfinance (free tier) | News: NewsAPI (free tier)</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="/static/js/app.js"></script>
+</body>
+
+</html>
