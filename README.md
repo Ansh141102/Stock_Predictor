@@ -6,6 +6,9 @@ A production-grade AI-powered stock analysis and prediction platform for NSE & B
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.109-green)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 ![Copyright](https://img.shields.io/badge/Copyright-Ansh%20Srivastava%20%40%202025-orange)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-blue)](https://stock-predictor-hwkr.onrender.com)
+
+> **🔴 Live Demo:** [https://stock-predictor-hwkr.onrender.com](https://stock-predictor-hwkr.onrender.com)
 
 ## 🎯 Project Overview
 
