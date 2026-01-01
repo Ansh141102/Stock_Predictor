@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: stock-predictor
+    runtime: docker
+    region: singapore
+    plan: free
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: NEWS_API_KEY
+        sync: false
