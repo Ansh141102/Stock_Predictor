@@ -287,9 +287,9 @@ async def test_demo_data(symbol: str):
 if __name__ == "__main__":
     import uvicorn
     
-    # Fixed configuration for localhost:5000
-    HOST = "127.0.0.1"
-    PORT = 5000
+    # Configuration for Render/Docker
+    HOST = "0.0.0.0"
+    PORT = int(os.environ.get("PORT", 5000))
     
     logger.info(f"Starting server on http://{HOST}:{PORT}")
     logger.info(f"API Documentation: http://{HOST}:{PORT}/docs")
