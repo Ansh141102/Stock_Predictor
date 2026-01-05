@@ -43,6 +43,12 @@ class FundamentalsFetcher:
                 # Try to get data from history instead
                 hist = ticker.history(period="5d")
                 if hist.empty:
+                    # If initial fetch fails and symbol doesn't have suffix, try adding .NS
+                    if not symbol.endswith(('.NS', '.BO')):
+                        retry_symbol = f"{symbol}.NS"
+                        logger.info(f"Retrying with suffix: {retry_symbol}")
+                        return self.get_fundamentals(retry_symbol)
+                        
                     logger.error(f"No data available for {symbol}")
                     return None
                 
