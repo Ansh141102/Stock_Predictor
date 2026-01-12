@@ -35,6 +35,10 @@ class FundamentalsFetcher:
         try:
             logger.info(f"Fetching fundamentals for {symbol}")
             ticker = yf.Ticker(symbol)
+            
+            # Use custom User-Agent to avoid blocking
+            ticker.session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            
             info = ticker.info
             
             # Check if we got valid data
@@ -49,8 +53,8 @@ class FundamentalsFetcher:
                         logger.info(f"Retrying with suffix: {retry_symbol}")
                         return self.get_fundamentals(retry_symbol)
                         
-                    logger.error(f"No data available for {symbol}")
-                    return None
+                    logger.warning(f"No real data available for {symbol}, falling back to demo data")
+                    raise Exception("No data found")
                 
                 # Build fundamentals from historical data
                 latest_price = hist['Close'].iloc[-1]
@@ -151,12 +155,13 @@ class FundamentalsFetcher:
             
         except Exception as e:
             logger.error(f"Error fetching fundamentals for {symbol}: {str(e)}")
-            logger.exception("Full traceback:")
             
-            # Try demo data as last resort
+            # Try demo data as fallback for ALL errors
+            logger.warning(f"Falling back to generated/demo data for {symbol}")
             demo_data = get_demo_stock(symbol)
             if demo_data:
-                logger.warning(f"Using demo data for {symbol} (yfinance failed)")
+                # Cache demo data for short time to allow retry later
+                self.cache.set(cache_key, demo_data, category="fundamentals", ttl=300)
                 return demo_data
             
             return None
@@ -181,10 +186,15 @@ class FundamentalsFetcher:
         try:
             logger.info(f"Fetching historical data for {symbol}")
             ticker = yf.Ticker(symbol)
+            
+            # Use custom User-Agent
+            ticker.session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            
             hist = ticker.history(period=period)
             
             if hist.empty:
-                return None
+                logger.warning(f"History empty for {symbol}")
+                raise Exception("Empty history")
             
             # Convert to dictionary format
             historical_data = {
@@ -205,9 +215,9 @@ class FundamentalsFetcher:
             logger.error(f"Error fetching historical data for {symbol}: {str(e)}")
             
             # Try demo data as fallback
+            logger.warning(f"Falling back to generated demo historical data for {symbol}")
             demo_hist = generate_demo_historical_data(symbol)
             if demo_hist:
-                logger.warning(f"Using demo historical data for {symbol} (yfinance failed)")
                 # Cache demo data for shorter time
                 self.cache.set(cache_key, demo_hist, category="historical", ttl=3600)
                 return demo_hist

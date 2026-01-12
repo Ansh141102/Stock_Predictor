@@ -2,7 +2,11 @@
 Demo Data for Stock Predictor
 Used when yfinance is rate-limited or markets are closed
 """
+import random
+import numpy as np
+from datetime import datetime, timedelta
 
+# Keep some hardcoded ones for consistency in demos
 DEMO_STOCKS = {
     "RELIANCE.NS": {
         "symbol": "RELIANCE.NS",
@@ -117,9 +121,61 @@ DEMO_STOCKS = {
     }
 }
 
+def generate_dynamic_fundamental(symbol: str):
+    """Generate consistent random fundamental data for a symbol"""
+    # Seed based on symbol string to ensure same symbol gets same values
+    seed_val = sum(ord(c) for c in symbol)
+    random.seed(seed_val)
+    
+    # Base price between 100 and 5000
+    base_price = random.uniform(100, 5000)
+    change = random.uniform(-base_price*0.05, base_price*0.05)
+    
+    return {
+        "symbol": symbol,
+        "name": f"{symbol.split('.')[0]} Limited",
+        "sector": random.choice(["Technology", "Finance", "Energy", "Healthcare", "Consumer Goods"]),
+        "industry": "Diversified",
+        "cmp": round(base_price, 2),
+        "previous_close": round(base_price - change, 2),
+        "open": round(base_price - change * 0.5, 2),
+        "day_high": round(base_price * 1.02, 2),
+        "day_low": round(base_price * 0.98, 2),
+        "volume": random.randint(10000, 5000000),
+        "market_cap": random.randint(1000, 50000) * 10000000,  # 1000-50000 Cr
+        "pe_ratio": round(random.uniform(10, 80), 2),
+        "forward_pe": round(random.uniform(10, 80) * 0.9, 2),
+        "peg_ratio": round(random.uniform(0.5, 3.0), 2),
+        "price_to_book": round(random.uniform(1, 15), 2),
+        "dividend_yield": round(random.uniform(0, 5), 2),
+        "eps": round(base_price / random.uniform(15, 30), 2),
+        "beta": round(random.uniform(0.5, 1.8), 2),
+        "52_week_high": round(base_price * 1.2, 2),
+        "52_week_low": round(base_price * 0.8, 2),
+        "50_day_avg": round(base_price * 0.95, 2),
+        "200_day_avg": round(base_price * 0.9, 2),
+        "profit_margin": round(random.uniform(5, 30), 2),
+        "operating_margin": round(random.uniform(10, 40), 2),
+        "roe": round(random.uniform(10, 30), 2),
+        "roa": round(random.uniform(5, 15), 2),
+        "debt_to_equity": round(random.uniform(0, 2), 2),
+        "current_ratio": round(random.uniform(1, 4), 2),
+        "revenue": random.randint(5000, 100000) * 10000000,
+        "revenue_growth": round(random.uniform(0, 25), 1),
+        "earnings_growth": round(random.uniform(0, 30), 1),
+        "recommendation": random.choice(["buy", "hold", "sell"]),
+        "target_price": round(base_price * 1.15, 2),
+        "change": round(change, 2),
+        "change_percent": round((change / (base_price - change)) * 100, 2)
+    }
+
 def get_demo_stock(symbol: str):
     """Get demo stock data"""
-    return DEMO_STOCKS.get(symbol, None)
+    if symbol in DEMO_STOCKS:
+        return DEMO_STOCKS[symbol]
+    
+    # Generate dynamic data for unknown symbols
+    return generate_dynamic_fundamental(symbol)
 
 def get_all_demo_symbols():
     """Get list of all demo symbols"""
@@ -127,11 +183,11 @@ def get_all_demo_symbols():
 
 def generate_demo_historical_data(symbol: str, days: int = 252):
     """Generate realistic historical data for demo stocks"""
-    import numpy as np
-    from datetime import datetime, timedelta
     
-    stock_data = DEMO_STOCKS.get(symbol)
+    # First get fundamental info to base price on
+    stock_data = get_demo_stock(symbol)
     if not stock_data:
+        # Should not happen with new dynamic generator
         return None
     
     # Generate dates (trading days only - Mon-Fri)
@@ -150,14 +206,21 @@ def generate_demo_historical_data(symbol: str, days: int = 252):
     prices = []
     
     # Create a realistic price movement
-    np.random.seed(hash(symbol) % 2**32)  # Consistent random data for same symbol
+    np.random.seed(sum(ord(c) for c in symbol))  # Consistent random data for same symbol
     
-    for i in range(days):
-        # Add some trend and volatility
-        trend = (i - days/2) * 0.001  # Slight upward trend
-        volatility = np.random.normal(0, 0.015)  # 1.5% daily volatility
-        price = base_price * (1 + trend + volatility)
-        prices.append(max(price, base_price * 0.5))  # Don't go below 50% of current
+    # Start price (backwards from current)
+    # We want the LAST price to match base_price roughly
+    
+    # Generate random walk
+    walk = np.random.normal(0, 0.015, days) # 1.5% daily volatility
+    walk[0] = 0
+    cumulative_returns = np.exp(np.cumsum(walk))
+    
+    # Adjust last value to match current price
+    adjustment = base_price / cumulative_returns[-1]
+    prices = cumulative_returns * adjustment
+    
+    prices = prices.tolist()
     
     # Generate OHLCV data
     historical_data = {
@@ -165,17 +228,23 @@ def generate_demo_historical_data(symbol: str, days: int = 252):
         "open": [],
         "high": [],
         "low": [],
-        "close": prices,
+        "close": [],
         "volume": []
     }
     
     for i, close_price in enumerate(prices):
         # Generate realistic OHLC
         daily_range = close_price * 0.02  # 2% daily range
-        open_price = close_price + np.random.uniform(-daily_range/2, daily_range/2)
-        high_price = max(open_price, close_price) + abs(np.random.uniform(0, daily_range/2))
-        low_price = min(open_price, close_price) - abs(np.random.uniform(0, daily_range/2))
         
+        # Randomize relationship within day
+        r1 = np.random.uniform(-0.5, 0.5)
+        r2 = np.random.uniform(0, 0.5)
+        
+        open_price = close_price * (1 + r1 * 0.01)
+        high_price = max(open_price, close_price) * (1 + r2 * 0.01)
+        low_price = min(open_price, close_price) * (1 - r2 * 0.01)
+        
+        historical_data["close"].append(round(close_price, 2))
         historical_data["open"].append(round(open_price, 2))
         historical_data["high"].append(round(high_price, 2))
         historical_data["low"].append(round(low_price, 2))
